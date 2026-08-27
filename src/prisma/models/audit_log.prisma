@@ -1,0 +1,18 @@
+model AuditLog {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  timestamp     DateTime @default(now()) @db.Timestamp(3)
+  eventType     String   @map("event_type") @db.VarChar(50)
+  userId        String?  @map("user_id") @db.Uuid
+  userRole      String?  @map("user_role") @db.VarChar(20)
+  action        String   @db.VarChar(100)
+  resourceType  String   @map("resource_type") @db.VarChar(50)
+  resourceId    String   @map("resource_id") @db.VarChar(50)
+  ipAddress     String?  @map("ip_address") @db.VarChar(45) // Supports IPv4/IPv6 string logging mappings
+  correlationId String   @map("correlation_id") @db.Uuid
+  outcome       String // 'success' or 'failure'
+  metadata      Json? // Handles structural modification payloads snapshots hashes
+
+  @@index([timestamp, eventType])
+  @@index([userId, timestamp])
+  @@map("audit_logs")
+}

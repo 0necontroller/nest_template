@@ -1,0 +1,35 @@
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  DEACTIVATED
+}
+
+model User {
+  id                               String     @id @default(uuid(7)) @db.Uuid
+  email                            String     @unique @db.VarChar(254)
+  firstName                        String     @map("first_name") @db.VarChar(200)
+  lastName                         String     @map("last_name") @db.VarChar(200)
+  role                             UserRole   @default(USER)
+  status                           UserStatus @default(PENDING_VERIFICATION)
+  country                          String?    @db.VarChar(2)
+  phone                            String?    @db.VarChar(20)
+  isEmailVerified                  Boolean    @default(false) @map("is_email_verified")
+  isTwoFactorAuthenticationEnabled Boolean    @default(false) @map("is_two_factor_authentication_enabled")
+  availability                     String     @default("active")
+  deactivationReason               String?    @map("deactivation_reason") @db.Text
+  createdAt                        DateTime   @default(now()) @map("created_at")
+  updatedAt                        DateTime   @updatedAt @map("updated_at")
+
+  accounts               Account[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+
+  @@index([email])
+  @@index([role, status])
+  @@map("users")
+}

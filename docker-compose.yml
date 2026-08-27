@@ -1,0 +1,134 @@
+name: nestjs-template
+
+services:
+  api:
+    profiles:
+      - app
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      REFRESH_JWT_SECRET: ${REFRESH_JWT_SECRET}
+      REFRESH_JWT_EXPIRES_IN: ${REFRESH_JWT_EXPIRES_IN}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+      SERVER_EMAIL: ${SERVER_EMAIL}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
+      OTP_TOTP_ISSUER: ${OTP_TOTP_ISSUER}
+      TP_TOTP_ISSUER: ${TP_TOTP_ISSUER}
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+      redis:
+        condition: service_started
+
+      minio:
+        condition: service_started
+
+    networks:
+      - backend
+
+  db:
+    image: postgres:17-alpine
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    networks:
+      - backend
+
+  redis:
+    image: redis:8.4-alpine
+
+    restart: unless-stopped
+
+    command: redis-server --appendonly yes
+
+    volumes:
+      - redis_data:/data
+
+    networks:
+      - backend
+
+  minio:
+    image: minio/minio:RELEASE.2025-03-12T18-04-18Z
+
+    restart: unless-stopped
+
+    command: server /data --console-address ":9001"
+
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+
+    volumes:
+      - minio_data:/data
+
+    networks:
+      - backend
+
+  minio-client:
+    image: minio/mc:RELEASE.2025-03-12T17-29-24Z
+    depends_on:
+      - minio
+    networks:
+      - backend
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5;
+        mc alias set local http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY};
+        mc mb -p local/${AWS_STORAGE_BUCKET_NAME};
+        mc policy set public local/${AWS_STORAGE_BUCKET_NAME};
+        exit 0;
+      "
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  pnpm-store:
+
+networks:
+  backend:

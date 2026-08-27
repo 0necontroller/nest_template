@@ -1,0 +1,23 @@
+enum NotificationPriority {
+  STANDARD
+  HIGH
+  URGENT
+}
+
+model Notification {
+  id        String               @id @default(uuid(7)) @db.Uuid
+  userId    String               @db.Uuid
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  eventType String               @map("event_type")
+  title     String               @db.VarChar(200)
+  message   String               @db.Text
+  priority  NotificationPriority @default(STANDARD)
+  isRead    Boolean              @default(false) @map("is_read")
+  readAt    DateTime?            @map("read_at")
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}

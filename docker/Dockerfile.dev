@@ -1,0 +1,13 @@
+FROM node:22-alpine
+
+RUN npm install -g pnpm
+
+WORKDIR /usr/app
+
+ENV PNPM_STORE_DIR=/pnpm-store
+
+COPY docker/docker-entrypoint.dev.sh /usr/local/bin/docker-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["sh", "/usr/local/bin/docker-entrypoint.sh"]

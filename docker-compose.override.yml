@@ -1,0 +1,38 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+
+    container_name: nest-api
+
+    ports:
+      - '8001:8001'
+
+    volumes:
+      - .:/usr/app
+      - /usr/app/node_modules
+      - pnpm-store:/pnpm-store
+
+    environment:
+      NODE_ENV: development
+
+    command: pnpm run start:dev
+
+  db:
+    container_name: db
+
+    ports:
+      - '5432:5432'
+
+  minio:
+    container_name: minio
+
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+
+  redis:
+    container_name: redis
+    ports:
+      - '6379:6379'

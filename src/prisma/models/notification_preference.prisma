@@ -1,0 +1,19 @@
+enum NotificationChannelPreference {
+    EMAIL
+    IN_APP
+    BOTH
+}
+
+model NotificationPreference {
+    id        String                        @id @default(uuid(7)) @db.Uuid
+    userId    String                        @unique @map("user_id") @db.Uuid
+    user      User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+    general   NotificationChannelPreference @default(BOTH) @map("general")
+    marketing NotificationChannelPreference @default(BOTH) @map("marketing")
+    security  NotificationChannelPreference @default(BOTH) @map("security")
+    updates   NotificationChannelPreference @default(BOTH) @map("updates")
+    createdAt DateTime                      @default(now()) @map("created_at")
+    updatedAt DateTime                      @updatedAt @map("updated_at")
+
+    @@map("notification_preferences")
+}

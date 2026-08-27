@@ -1,0 +1,13 @@
+model Account {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String    @map("provider_account_id")
+  passwordHash                  String?   @map("password_hash")
+  twoFactorAuthenticationSecret String?   @map("two_factor_authentication_secret")
+  lastLoginAt                   DateTime? @map("last_login_at")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
